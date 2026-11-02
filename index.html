@@ -1,0 +1,1655 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plasmid Restriction Roulette</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: #c0c0c0;
+        color: #000000;
+        margin: 0;
+        padding: 8px;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        background: #ece9d8;
+        border: 2px solid #0055ea;
+        padding: 12px;
+        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3);
+      }
+      h1 {
+        color: #000080;
+        font-size: 20px;
+        border-bottom: 2px solid #000080;
+        padding-bottom: 5px;
+        margin: 0 0 12px 0;
+      }
+      .panel {
+        background: #ffffff;
+        border: 2px inset #808080;
+        padding: 10px;
+        margin-bottom: 12px;
+      }
+      label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      input[type="file"],
+      input[type="text"],
+      button,
+      textarea {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px; /* prevents auto-zoom on iOS */
+      }
+      .file-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      input[type="file"] {
+        flex: 1 1 200px;
+        min-width: 0;
+        padding: 4px;
+        background: #f0f0f0;
+        border: 1px solid #999;
+        font-size: 14px;
+      }
+      button {
+        background-color: #d4d0c8;
+        border: 2px outset #ffffff;
+        color: #000;
+        cursor: pointer;
+        font-weight: bold;
+        padding: 8px 12px;
+        font-size: 14px;
+        min-height: 40px;
+      }
+      button:active {
+        border-style: inset;
+      }
+      button:disabled {
+        background-color: #e0e0e0;
+        color: #888888;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background-color: #e1efe6;
+        font-size: 17px;
+        padding: 12px;
+        width: 100%;
+        margin-top: 12px;
+        min-height: 48px;
+      }
+      .btn-small {
+        font-size: 13px;
+        padding: 6px 10px;
+      }
+      .status-bar {
+        font-size: 13px;
+        background: #ffffcc;
+        border: 1px solid #808080;
+        padding: 6px 8px;
+        margin-top: 8px;
+        color: #000080;
+        font-weight: bold;
+        word-break: break-word;
+      }
+      .workspace {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .left-col,
+      .right-col {
+        min-width: 0;
+      }
+      /* Mobile: wheel first, list below */
+      .right-col {
+        order: -1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      /* Tablet landscape & PC: side by side */
+      @media (min-width: 760px) {
+        .workspace {
+          flex-direction: row;
+          align-items: flex-start;
+        }
+        .left-col {
+          flex: 1 1 auto;
+        }
+        .right-col {
+          order: 0;
+          flex: 0 0 440px;
+          width: 440px;
+          position: sticky;
+          top: 8px;
+        }
+      }
+      #canvas-container {
+        width: 100%;
+        max-width: 460px;
+        background: #ffffff;
+        border: 2px inset #808080;
+        margin: 0 auto;
+        line-height: 0;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+      }
+      .active-info {
+        font-size: 12px;
+        color: #333;
+        margin-top: 6px;
+        text-align: center;
+      }
+      .opt-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .opt-row label {
+        display: inline;
+        margin: 0;
+        font-weight: normal;
+        font-size: 13px;
+      }
+      .winner-box {
+        background: #ffff00;
+        border: 3px solid #ff0000;
+        padding: 12px;
+        text-align: center;
+        margin-top: 12px;
+        width: 100%;
+      }
+      .winner-title {
+        font-size: 13px;
+        font-weight: bold;
+        color: #000;
+        text-transform: uppercase;
+      }
+      .winner-name {
+        font-size: 28px;
+        font-weight: bold;
+        color: #ff0000;
+        margin: 6px 0;
+        word-break: break-word;
+      }
+      .winner-details {
+        font-size: 13px;
+        color: #222;
+        font-weight: bold;
+        word-break: break-word;
+      }
+      .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+        align-items: center;
+      }
+      .scroll-box {
+        max-height: 300px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px inset #808080;
+        background: #fff;
+      }
+      @media (min-width: 760px) {
+        .scroll-box {
+          max-height: calc(100vh - 330px);
+          min-height: 220px;
+        }
+      }
+      table.data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        font-size: 13px;
+      }
+      table.data-table th,
+      table.data-table td {
+        border: 1px solid #808080;
+        padding: 6px 8px;
+        text-align: left;
+        word-break: break-word;
+      }
+      table.data-table th {
+        background-color: #d4d0c8;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Plasmid Restriction Roulette</h1>
+
+      <div class="panel">
+        <label for="fileInput"
+          >1. Upload plasmid file (.dna, .gb, .gbk, .fasta, .fa, .txt):</label
+        >
+        <div class="file-row">
+          <input type="file" id="fileInput" />
+          <button
+            type="button"
+            class="btn-small"
+            onclick="manualLoadFile()"
+            style="background: #cce5ff"
+          >
+            Load selected file
+          </button>
+          <button type="button" class="btn-small" onclick="togglePasteBox()">
+            Or paste text
+          </button>
+        </div>
+
+        <div id="pasteContainer" style="display: none; margin-top: 8px">
+          <textarea
+            id="pasteInput"
+            rows="4"
+            style="width: 100%; font-family: monospace; font-size: 14px"
+            placeholder="Paste FASTA, GenBank, or raw DNA sequence (A, C, G, T) here..."
+          ></textarea>
+          <button
+            type="button"
+            class="btn-small"
+            onclick="loadFromPaste()"
+            style="margin-top: 4px; background: #d4edda"
+          >
+            Analyze pasted sequence
+          </button>
+        </div>
+
+        <div class="status-bar" id="fileStatus">
+          Checking JavaScript environment...
+        </div>
+
+        <div style="font-size: 11px; color: #555; margin-top: 6px">
+          Note: If nothing loads on iPad/mobile, the page might be opened in a
+          file previewer. Please open it in <b>Safari</b> or <b>Chrome</b>.
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div class="left-col">
+          <div class="panel">
+            <label>2. Detected restriction sites on the vector:</label>
+            <div class="btn-row">
+              <button type="button" class="btn-small" onclick="toggleAll(true)">
+                All on
+              </button>
+              <button
+                type="button"
+                class="btn-small"
+                onclick="toggleAll(false)"
+              >
+                All off
+              </button>
+              <button
+                type="button"
+                class="btn-small"
+                onclick="selectUniqueCutters()"
+              >
+                Single cutters only (1x)
+              </button>
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Search enzyme..."
+                style="flex: 1 1 120px; min-width: 100px; padding: 5px"
+                oninput="filterTable()"
+              />
+            </div>
+            <div class="scroll-box">
+              <table class="data-table" id="sitesTable">
+                <thead>
+                  <tr>
+                    <th style="width: 40px; text-align: center">On</th>
+                    <th>Enzyme</th>
+                    <th>Cut position(s)</th>
+                    <th>Sequence</th>
+                  </tr>
+                </thead>
+                <tbody id="sitesTableBody">
+                  <tr>
+                    <td colspan="4" style="text-align: center; padding: 15px">
+                      Loading...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div id="canvas-container">
+            <canvas id="rouletteCanvas" width="300" height="300"></canvas>
+          </div>
+          <div class="active-info" id="activeInfo"></div>
+          <div class="opt-row">
+            <input
+              type="checkbox"
+              id="showNames"
+              checked
+              onchange="refreshWheel()"
+            />
+            <label for="showNames"
+              >Show enzyme names on wheel (auto-hidden above 40 sites)</label
+            >
+          </div>
+
+          <div class="opt-row">
+            <input
+              type="checkbox"
+              id="hideMcs"
+              checked
+              onchange="onMcsToggle()"
+            />
+            <label for="hideMcs" id="mcsLabel"
+              >Hide Multiple Cloning Site</label
+            >
+          </div>
+
+          <button
+            id="spinBtn"
+            class="btn-primary"
+            onclick="startSpin()"
+            disabled
+          >
+            PRESS TO SPIN!
+          </button>
+
+          <div class="winner-box" id="winnerBox" style="display: none">
+            <div class="winner-title">Winning Cutting Site:</div>
+            <div class="winner-name" id="winnerName">-</div>
+            <div class="winner-details" id="winnerDetails">Position: -</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.onerror = function (msg, url, lineNo) {
+        var st = document.getElementById("fileStatus");
+        if (st) {
+          st.style.background = "#ffcccc";
+          st.style.color = "#990000";
+          st.innerHTML = "Browser error (line " + lineNo + "): " + msg;
+        }
+        return false;
+      };
+
+      var TWO_PI = Math.PI * 2;
+
+      // pUC19 demo sequence (2686 bp) as default preset
+      var plasmidName = "pUC19 (Default)";
+      var plasmidSeq =
+        "TCGCGCGTTTCGGTGATGACGGTGAAAACCTCTGACACATGCAGCTCCCGGAGACGGTCACAGCTTGTCTGTAAGCGGATGCCGGGAGCAGACAAGCCCG" +
+        "TCAGGGCGCGTCAGCGGGTGTTGGCGGGTGTCGGGGCTGGCTTAACTATGCGGCATCAGAGCAGATTGTACTGAGAGTGCACCATATGCGGTGTGAAATA" +
+        "CCGCACAGATGCGTAAGGAGAAAATACCGCATCAGGCGCCATTCGCCATTCAGGCTGCGCAACTGTTGGGAAGGGCGATCGGTGCGGGCCTCTTCGCTAT" +
+        "TACGCCAGCTGGCGAAAGGGGGATGTGCTGCAAGGCGATTAAGTTGGGTAACGCCAGGGTTTTCCCAGTCACGACGTTGTAAAACGACGGCCAGTGAATT" +
+        "CGAGCTCGGTACCCGGGGATCCTCTAGAGTCGACCTGCAGGCATGCAAGCTTGGCGTAATCATGGTCATAGCTGTTTCCTGTGTGAAATTGTTATCCGCT" +
+        "CACAATTCCACACAACATACGAGCCGGAAGCATAAAGTGTAAAGCCTGGGGTGCCTAATGAGTGAGCTAACTCACATTAATTGCGTTGCGCTCACTGCCC" +
+        "GCTTTCCAGTCGGGAAACCTGTCGTGCCAGCTGCATTAATGAATCGGCCAACGCGCGGGGAGAGGCGGTTTGCGTATTGGGCGCTCTTCCGCTTCCTCGC" +
+        "TCACTGACTCGCTGCGCTCGGTCGTTCGGCTGCGGCGAGCGGTATCAGCTCACTCAAAGGCGGTAATACGGTTATCCACAGAATCAGGGGATAACGCAGG" +
+        "AAAGAACATGTGAGCAAAAGGCCAGCAAAAGGCCAGGAACCGTAAAAAGGCCGCGTTGCTGGCGTTTTTCCATAGGCTCCGCCCCCCTGACGAGCATCAC" +
+        "AAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGA" +
+        "CCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCATAGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGT" +
+        "TCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCCGTTCAGCCCGACCGCTGCGCCTTATCCGGTAACTATCGTCTTGAGTCCAACCCGGTAAGACACGAC" +
+        "TTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTAGGCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACA" +
+        "CTAGAAGAACAGTATTTGGTATCTGCGCTCTGCTGAAGCCAGTTACCTTCGGAAAAAGAGTTGGTAGCTCTTGATCCGGCAAACAAACCACCGCTGGTAG" +
+        "CGGTGGTTTTTTTGTTTGCAAGCAGCAGATTACGCGCAGAAAAAAAGGATCTCAAGAAGATCCTTTGATCTTTTCTACGGGGTCTGACGCTCAGTGGAAC" +
+        "GAAAACTCACGTTAAGGGATTTTGGTCATGAGATTATCAAAAAGGATCTTCACCTAGATCCTTTTAAATTAAAAATGAAGTTTTAAATCAATCTAAAGTA" +
+        "TATATGAGTAAACTTGGTCTGACAGTTACCAATGCTTAATCAGTGAGGCACCTATCTCAGCGATCTGTCTATTTCGTTCATCCATAGTTGCCTGACTCCC" +
+        "CGTCGTGTAGATAACTACGATACGGGAGGGCTTACCATCTGGCCCCAGTGCTGCAATGATACCGCGAGACCCACGCTCACCGGCTCCAGATTTATCAGCA" +
+        "ATAAACCAGCCAGCCGGAAGGGCCGAGCGCAGAAGTGGTCCTGCAACTTTATCCGCCTCCATCCAGTCTATTAATTGTTGCCGGGAAGCTAGAGTAAGTA" +
+        "GTTCGCCAGTTAATAGTTTGCGCAACGTTGTTGCCATTGCTACAGGCATCGTGGTGTCACGCTCGTCGTTTGGTATGGCTTCATTCAGCTCCGGTTCCCA" +
+        "ACGATCAAGGCGAGTTACATGATCCCCCATGTTGTGCAAAAAAGCGGTTAGCTCCTTCGGTCCTCCGATCGTTGTCAGAAGTAAGTTGGCCGCAGTGTTA" +
+        "TCACTCATGGTTATGGCAGCACTGCATAATTCTCTTACTGTCATGCCATCCGTAAGATGCTTTTCTGTGACTGGTGAGTACTCAACCAAGTCATTCTGAG" +
+        "AATAGTGTATGCGGCGACCGAGTTGCTCTTGCCCGGCGTCAATACGGGATAATACCGCGCCACATAGCAGAACTTTAAAAGTGCTCATCATTGGAAAACG" +
+        "TTCTTCGGGGCGAAAACTCTCAAGGATCTTACCGCTGTTGAGATCCAGTTCGATGTAACCCACTCGTGCACCCAACTGATCTTCAGCATCTTTTACTTTC" +
+        "ACCAGCGTTTCTGGGTGAGCAAAAACAGGAAGGCAAAATGCCGCAAAAAAGGGAATAAGGGCGACACGGAAATGTTGAATACTCATACTCTTCCTTTTTC" +
+        "AATATTATTGAAGCATTTATCAGGGTTATTGTCTCATGAGCGGATACATATTTGAATGTATTTAGAAAAATAAACAAATAGGGGTTCCGCGCACATTTCC" +
+        "CCGAAAAGTGCCACCTGACGTCTAAGAAACCATTATTATCATGACATTAACCTATAAAAATAGGCGTATCACGAGGCCCTTTCGTCTCGCGCGTTTCGGT";
+
+      var plasmidSize = plasmidSeq.length;
+
+      // Common restriction enzymes. ^ marks the cut site on the top strand.
+      var rawEnzymeDatabase = {
+        AatII: "GACGT^C",
+        Acc65I: "G^GTACC",
+        AccI: "GT^MKAC",
+        AclI: "AA^CGTT",
+        AfeI: "AGC^GCT",
+        AflII: "C^TTAAG",
+        AflIII: "A^CRYGT",
+        AgeI: "A^CCGGT",
+        AhaIII: "TTT^AAA",
+        AluI: "AG^CT",
+        AlwNI: "CAGNNN^CTG",
+        ApaI: "GGGCC^C",
+        ApaLI: "G^TGCAC",
+        ApoI: "R^AATTY",
+        AscI: "GG^CGCGCC",
+        AseI: "AT^TAAT",
+        AsiSI: "GCGAT^CGC",
+        AvrII: "C^CTAGG",
+        BamHI: "G^GATCC",
+        BanI: "G^GYRCC",
+        BanII: "GRGCY^C",
+        BbsI: "GAAGAC",
+        BclI: "T^GATCA",
+        BfaI: "C^TAG",
+        BglI: "GCCNNNN^NGGC",
+        BglII: "A^GATCT",
+        BlpI: "GC^TNAGC",
+        BmgBI: "CAC^GTC",
+        BmtI: "GCTAG^C",
+        BsaAI: "YAC^GTR",
+        BsaBI: "GATNN^NNATC",
+        BsaHI: "GR^CGYC",
+        BsaI: "GGTCTC",
+        BsaJI: "C^CNNGG",
+        BsaWI: "W^CCGGW",
+        BsiEI: "CGRY^CG",
+        BsiHKAI: "GWGCW^C",
+        BsiWI: "C^GTACG",
+        BsmBI: "CGTCTC",
+        BsmI: "GAATGC",
+        Bsp1286I: "GDGCH^C",
+        BspDI: "AT^CGAT",
+        BspEI: "T^CCGGA",
+        BspHI: "T^CATGA",
+        BsrBI: "CCG^CTC",
+        BsrDI: "GCAATG",
+        BsrFI: "R^CCGGY",
+        BsrGI: "T^GTACA",
+        BssHII: "G^CGCGC",
+        BstAPI: "GCANNNN^NTGC",
+        BstBI: "TT^CGAA",
+        BstEII: "G^GTNACC",
+        BstNI: "CC^WGG",
+        BstUI: "CG^CG",
+        BstXI: "CCANNNNN^NTGG",
+        BstYI: "R^GATCY",
+        BstZ17I: "GTA^TAC",
+        Bsu36I: "CC^TNAGG",
+        BtgI: "C^CRYGG",
+        BtgZI: "GCGATG",
+        ClaI: "AT^CGAT",
+        CviQI: "G^TAC",
+        DdeI: "C^TNAG",
+        DpnI: "GA^TC",
+        DraI: "TTT^AAA",
+        DraIII: "CACNNN^GTG",
+        DrdI: "GACNNNN^NNGTC",
+        EaeI: "Y^GGCCR",
+        EagI: "C^GGCCGC",
+        EcoNI: "CCTNN^NNNAGG",
+        EcoO109I: "RG^GNCCY",
+        EcoRI: "G^AATTC",
+        EcoRV: "GAT^ATC",
+        FseI: "GGCCGG^CC",
+        FspI: "TGC^GCA",
+        HaeII: "RGCGC^Y",
+        HaeIII: "GG^CC",
+        HhaI: "GCG^C",
+        HincII: "GTY^RAC",
+        HindIII: "A^AGCTT",
+        HinfI: "G^ANTC",
+        HinP1I: "G^CGC",
+        HpaI: "GTT^AAC",
+        HpaII: "C^CGG",
+        KpnI: "GGTAC^C",
+        MfeI: "C^AATTG",
+        MluI: "A^CGCGT",
+        MscI: "TGG^CCA",
+        MseI: "T^TAA",
+        MspI: "C^CGG",
+        NaeI: "GCC^GGC",
+        NarI: "GG^CGCC",
+        NcoI: "C^CATGG",
+        NdeI: "CA^TATG",
+        NgoMIV: "G^CCGGC",
+        NheI: "G^CTAGC",
+        NotI: "GC^GGCCGC",
+        NruI: "TCG^CGA",
+        NsiI: "ATGCA^T",
+        PacI: "TTAAT^TAA",
+        PciI: "A^CATGT",
+        PmeI: "GTTT^AAAC",
+        PmlI: "CAC^GTG",
+        PsiI: "TTA^TAA",
+        PspOMI: "G^GGCCC",
+        PstI: "CTGCA^G",
+        PvuI: "CGAT^CG",
+        PvuII: "CAG^CTG",
+        RsrII: "CG^GWCCG",
+        SacI: "GAGCT^C",
+        SacII: "CCGC^GG",
+        SalI: "G^TCGAC",
+        SbfI: "CCTGCA^GG",
+        ScaI: "AGT^ACT",
+        SfcI: "C^TRYAG",
+        SfiI: "GGCCNNNN^NGGCC",
+        SfoI: "GGC^GCC",
+        SmaI: "CCC^GGG",
+        SmlI: "C^TYRAG",
+        SnaBI: "TAC^GTA",
+        SpeI: "A^CTAGT",
+        SphI: "GCATG^C",
+        SspI: "AAT^ATT",
+        StuI: "AGG^CCT",
+        SwaI: "ATTT^AAAT",
+        TaqI: "T^CGA",
+        TfiI: "G^AWTC",
+        XbaI: "T^CTAGA",
+        XcmI: "CCANNNNN^NNNNTGG",
+        XhoI: "C^TCGAG",
+        XmaI: "C^CCGGG",
+        ZraI: "GAC^GTC",
+      };
+
+      // Type IIS enzymes: cut position lies outside the recognition sequence
+      // (Offset = bases from start of recognition sequence to the cut on the top strand)
+      var offsetOverride = {
+        BbsI: 8,
+        BsaI: 7,
+        BsmBI: 7,
+        BsmI: 7,
+        BsrDI: 8,
+        BtgZI: 16,
+      };
+
+      var iupacRegexMap = {
+        A: "A",
+        C: "C",
+        G: "G",
+        T: "T",
+        R: "[AG]",
+        Y: "[CT]",
+        S: "[GC]",
+        W: "[AT]",
+        K: "[GT]",
+        M: "[AC]",
+        B: "[CGT]",
+        D: "[AGT]",
+        H: "[ACT]",
+        V: "[ACG]",
+        N: "[ACGT]",
+      };
+
+      var iupacComplement = {
+        A: "T",
+        C: "G",
+        G: "C",
+        T: "A",
+        R: "Y",
+        Y: "R",
+        S: "S",
+        W: "W",
+        K: "M",
+        M: "K",
+        B: "V",
+        D: "H",
+        H: "D",
+        V: "B",
+        N: "N",
+      };
+
+      var colorPalette = [
+        "#d90000",
+        "#0000cc",
+        "#008800",
+        "#990099",
+        "#e65c00",
+        "#008080",
+        "#800000",
+        "#4b0082",
+        "#b36b00",
+        "#0059b3",
+        "#cc0066",
+        "#2d862d",
+        "#595959",
+        "#804000",
+      ];
+
+      var enzymes = {};
+      var detectedSites = {};
+      var uncheckedSet = {};
+      var currentRotation = 0;
+      var isSpinning = false;
+      var winnerSite = null; // {enz, pos}
+      var mcsRegion = null; // {start, len, count} – automatically detected Multiple Cloning Site
+      var canvasSize = 300;
+      var canvasDpr = 1;
+
+      function reverseComplement(seq) {
+        var out = "";
+        for (var i = seq.length - 1; i >= 0; i--) {
+          out += iupacComplement[seq.charAt(i)] || "N";
+        }
+        return out;
+      }
+
+      function seqToRegex(seq) {
+        var s = "";
+        for (var c = 0; c < seq.length; c++) {
+          s += iupacRegexMap[seq.charAt(c)] || seq.charAt(c);
+        }
+        return s;
+      }
+
+      function buildEnzymeObjects(rawDict) {
+        enzymes = {};
+        var idx = 0;
+        for (var name in rawDict) {
+          if (!rawDict.hasOwnProperty(name)) continue;
+          var pattern = rawDict[name];
+          var cleanSeq = pattern.replace(/[^A-Za-z]/g, "").toUpperCase();
+          var cutOffset = pattern.indexOf("^");
+          var display = pattern;
+          if (offsetOverride.hasOwnProperty(name)) {
+            cutOffset = offsetOverride[name];
+            display =
+              cleanSeq +
+              " (cut " +
+              (cutOffset >= cleanSeq.length
+                ? "+" + (cutOffset - cleanSeq.length)
+                : cutOffset) +
+              ")";
+          } else if (cutOffset === -1) {
+            cutOffset = Math.floor(cleanSeq.length / 2);
+          }
+          var rc = reverseComplement(cleanSeq);
+          enzymes[name] = {
+            seq: cleanSeq,
+            rawPattern: display,
+            cutOffset: cutOffset,
+            regexFwd: new RegExp(seqToRegex(cleanSeq), "g"),
+            regexRev: new RegExp(seqToRegex(rc), "g"),
+            palindromic: rc === cleanSeq,
+            color: colorPalette[idx % colorPalette.length],
+          };
+          idx++;
+        }
+      }
+
+      /* ---------- File / Text Import ---------- */
+
+      function togglePasteBox() {
+        var box = document.getElementById("pasteContainer");
+        box.style.display = box.style.display === "none" ? "block" : "none";
+      }
+
+      function cleanDNA(str) {
+        return str
+          .replace(/[^A-Za-z]/g, "")
+          .toUpperCase()
+          .replace(/[^ACGT]/g, "N");
+      }
+
+      function bufferToBinaryString(buf) {
+        var bytes = new Uint8Array(buf);
+        var chunk = 0x8000;
+        var s = "";
+        for (var i = 0; i < bytes.length; i += chunk) {
+          s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        }
+        return s;
+      }
+
+      // SnapGene .dna: packets of 1 byte type + 4 bytes length (big endian) + data. Type 0 = DNA sequence.
+      function parseSnapGene(s) {
+        var pos = 0;
+        while (pos + 5 <= s.length) {
+          var type = s.charCodeAt(pos);
+          var len =
+            ((s.charCodeAt(pos + 1) << 24) |
+              (s.charCodeAt(pos + 2) << 16) |
+              (s.charCodeAt(pos + 3) << 8) |
+              s.charCodeAt(pos + 4)) >>>
+            0;
+          if (type === 0) {
+            return cleanDNA(s.substr(pos + 6, len - 1)); // first byte = flags
+          }
+          pos += 5 + len;
+        }
+        return "";
+      }
+
+      // Returns {name, seq}
+      function parseSequenceText(s, fileName) {
+        var baseName = (fileName || "").replace(/\.[^.]*$/, "");
+        var result = { name: baseName || "Sequence", seq: "" };
+
+        // SnapGene .dna
+        if (
+          s.length > 20 &&
+          s.charCodeAt(0) === 9 &&
+          s.substr(6, 8) === "SnapGene"
+        ) {
+          result.seq = parseSnapGene(s);
+          if (result.seq.length > 20) return result;
+        }
+
+        // GenBank
+        var locusM = /^LOCUS\s+(\S+)/m.exec(s);
+        var originM = /^ORIGIN/m.exec(s);
+        if (originM) {
+          if (locusM) result.name = locusM[1];
+          var after = s.substring(originM.index + 6);
+          var endSlash = after.indexOf("//");
+          if (endSlash !== -1) after = after.substring(0, endSlash);
+          result.seq = cleanDNA(after);
+          if (result.seq.length > 20) return result;
+        }
+
+        // FASTA (first entry) or raw text
+        var lines = s.split(/\r?\n/);
+        var parts = [];
+        var started = false;
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].replace(/^\s+|\s+$/g, "");
+          if (!line) continue;
+          if (line.charAt(0) === ">") {
+            if (started) break;
+            started = true;
+            var h = line.substring(1).replace(/^\s+/, "").split(/\s+/)[0];
+            if (h) result.name = h;
+            continue;
+          }
+          if (line.charAt(0) === ";") continue;
+          parts.push(line);
+        }
+        result.seq = cleanDNA(parts.join(""));
+        return result;
+      }
+
+      function applyNewSequence(res) {
+        if (res && res.seq && res.seq.length > 20) {
+          plasmidName = res.name;
+          plasmidSeq = res.seq;
+          plasmidSize = plasmidSeq.length;
+          currentRotation = 0;
+          winnerSite = null;
+          document.getElementById("winnerBox").style.display = "none";
+          analyzePlasmid(false);
+          return true;
+        }
+        return false;
+      }
+
+      function loadFromPaste() {
+        var val = document.getElementById("pasteInput").value;
+        if (!val || val.length < 10) {
+          alert("Please paste a valid DNA sequence into the text field.");
+          return;
+        }
+        var res = parseSequenceText(val, "Pasted Sequence");
+        if (!applyNewSequence(res)) {
+          alert(
+            "Could not detect a valid DNA sequence (A, C, G, T) in the pasted text.",
+          );
+        }
+      }
+
+      function handleSelectedFile(file) {
+        if (!file) {
+          alert("Please select a file first.");
+          return;
+        }
+        var st = document.getElementById("fileStatus");
+        st.style.background = "#ffffcc";
+        st.style.color = "#000080";
+        st.innerHTML = "Reading file: " + file.name + " ...";
+
+        var reader = new FileReader();
+        reader.onload = function (evt) {
+          var content = evt.target.result;
+          var str =
+            typeof content === "string"
+              ? content
+              : bufferToBinaryString(content);
+          var res = parseSequenceText(str, file.name);
+          if (!applyNewSequence(res)) {
+            st.style.background = "#ffcccc";
+            st.style.color = "#990000";
+            st.innerHTML =
+              "Error: Could not find a DNA sequence in '" + file.name + "'.";
+          }
+        };
+        reader.onerror = function () {
+          st.style.background = "#ffcccc";
+          st.style.color = "#990000";
+          st.innerHTML =
+            "Error accessing file on this device. Alternatively, use 'Or paste text'.";
+        };
+        if (reader.readAsArrayBuffer) {
+          reader.readAsArrayBuffer(file);
+        } else {
+          reader.readAsBinaryString(file);
+        }
+      }
+
+      function manualLoadFile() {
+        var input = document.getElementById("fileInput");
+        if (input && input.files && input.files.length > 0) {
+          handleSelectedFile(input.files[0]);
+        } else {
+          alert("Please tap 'Choose File' first and select your plasmid file.");
+        }
+      }
+
+      /* ---------- Analysis ---------- */
+
+      function captureUnchecked() {
+        uncheckedSet = {};
+        var checks = document.getElementsByClassName("enzyme-check");
+        for (var i = 0; i < checks.length; i++) {
+          if (!checks[i].checked) uncheckedSet[checks[i].value] = true;
+        }
+      }
+
+      // Scans one strand; for reverse strand, converts the cut position to top-strand coordinates
+      function scanStrand(regex, ext, N, L, offset, reverse, positions) {
+        regex.lastIndex = 0;
+        var m;
+        while ((m = regex.exec(ext)) !== null) {
+          var i = m.index;
+          if (i >= N) break;
+          var pos = reverse ? i + L - offset : i + offset;
+          pos = ((pos % N) + N) % N;
+          if (pos === 0) pos = N;
+          if (positions.indexOf(pos) === -1) positions.push(pos);
+          regex.lastIndex = i + 1;
+        }
+      }
+
+      function analyzePlasmid(keepSelection) {
+        if (keepSelection) captureUnchecked();
+        else uncheckedSet = {};
+        detectedSites = {};
+        var totalCutSites = 0;
+
+        for (var enz in enzymes) {
+          if (!enzymes.hasOwnProperty(enz)) continue;
+          var data = enzymes[enz];
+          var L = data.seq.length;
+          if (plasmidSize < L) continue;
+
+          var ext = plasmidSeq + plasmidSeq.substring(0, L - 1);
+          var positions = [];
+          scanStrand(
+            data.regexFwd,
+            ext,
+            plasmidSize,
+            L,
+            data.cutOffset,
+            false,
+            positions,
+          );
+          if (!data.palindromic) {
+            scanStrand(
+              data.regexRev,
+              ext,
+              plasmidSize,
+              L,
+              data.cutOffset,
+              true,
+              positions,
+            );
+          }
+
+          if (positions.length > 0) {
+            positions.sort(function (a, b) {
+              return a - b;
+            });
+            detectedSites[enz] = positions;
+            totalCutSites += positions.length;
+          }
+        }
+
+        detectMCS();
+
+        // If "Hide Multiple Cloning Site" is active on fresh load,
+        // automatically uncheck pure MCS enzymes in the table
+        if (!keepSelection && mcsHidden()) {
+          for (var enzName in detectedSites) {
+            if (!detectedSites.hasOwnProperty(enzName)) continue;
+            if (isPureMcsEnzyme(enzName)) {
+              uncheckedSet[enzName] = true;
+            }
+          }
+        }
+
+        var enzCount = Object.keys(detectedSites).length;
+        var st = document.getElementById("fileStatus");
+        st.style.background = "#e8f5e9";
+        st.style.color = "#004d00";
+        st.innerHTML =
+          "Active: <b>" +
+          plasmidName +
+          "</b> (" +
+          plasmidSize +
+          " bp) &mdash; <b>" +
+          enzCount +
+          " enzymes</b> (" +
+          totalCutSites +
+          " cut sites) detected.";
+        updateUI();
+      }
+
+      /* ---------- Multiple Cloning Site Detection ---------- */
+
+      function relPos(pos, start) {
+        return (((pos - start) % plasmidSize) + plasmidSize) % plasmidSize;
+      }
+
+      function inMcs(pos) {
+        return !!mcsRegion && relPos(pos, mcsRegion.start) <= mcsRegion.len;
+      }
+
+      function isPureMcsEnzyme(enz) {
+        var posList = detectedSites[enz];
+        if (!posList || posList.length === 0 || !mcsRegion) return false;
+        for (var i = 0; i < posList.length; i++) {
+          if (!inMcs(posList[i])) return false;
+        }
+        return true;
+      }
+
+      // The MCS is the window (100 bp) containing the highest number of distinct (preferably rare-cutting) enzymes.
+      function detectMCS() {
+        mcsRegion = null;
+        var all = [];
+        for (var enz in detectedSites) {
+          if (!detectedSites.hasOwnProperty(enz)) continue;
+          var cuts = detectedSites[enz].length;
+          for (var p = 0; p < cuts; p++) {
+            all.push({ enz: enz, pos: detectedSites[enz][p], rare: cuts <= 3 });
+          }
+        }
+        // IMPORTANT: Sort by position on the plasmid!
+        all.sort(function (a, b) {
+          return a.pos - b.pos;
+        });
+
+        var lbl = document.getElementById("mcsLabel");
+        var chk = document.getElementById("hideMcs");
+        var n = all.length;
+        var N = plasmidSize;
+
+        if (N >= 400 && n >= 5) {
+          var W = 100,
+            bestScore = 0,
+            bestCount = 0,
+            bestIdx = -1,
+            bestEnd = 0;
+          for (var i = 0; i < n; i++) {
+            var seen = {},
+              cnt = 0,
+              rareCnt = 0,
+              lastD = 0;
+            for (var k = 0; k < n; k++) {
+              var j = (i + k) % n;
+              var d = relPos(all[j].pos, all[i].pos);
+              if (d > W) break;
+              if (!seen[all[j].enz]) {
+                seen[all[j].enz] = 1;
+                cnt++;
+                if (all[j].rare) rareCnt++;
+              }
+              lastD = d;
+            }
+            var score = rareCnt * 2 + cnt;
+            if (cnt >= 5 && rareCnt >= 3 && score > bestScore) {
+              bestScore = score;
+              bestCount = cnt;
+              bestIdx = i;
+              bestEnd = lastD;
+            }
+          }
+          if (bestIdx !== -1 && bestCount >= 5) {
+            var start = all[bestIdx].pos;
+            var end = bestEnd; // length of region from start
+            var changed = true;
+            while (changed) {
+              changed = false;
+              for (var q = 0; q < n; q++) {
+                if (!all[q].rare) continue;
+                var rel = relPos(all[q].pos, start);
+                if (rel > end && rel <= end + 20 && end < 220) {
+                  end = rel;
+                  changed = true;
+                }
+                var back = relPos(start, all[q].pos);
+                if (back > 0 && back <= 20 && end + back <= 220) {
+                  start = all[q].pos;
+                  end += back;
+                  changed = true;
+                }
+              }
+            }
+            start = start - 2;
+            if (start < 1) start += N;
+            end += 4;
+            // Count all enzymes cutting within the final MCS region
+            var finalSeen = {},
+              finalCount = 0;
+            for (var m = 0; m < n; m++) {
+              if (relPos(all[m].pos, start) <= end && !finalSeen[all[m].enz]) {
+                finalSeen[all[m].enz] = 1;
+                finalCount++;
+              }
+            }
+            mcsRegion = { start: start, len: end, count: finalCount };
+          }
+        }
+
+        if (lbl && chk) {
+          if (mcsRegion) {
+            var e = ((mcsRegion.start + mcsRegion.len - 1) % N) + 1;
+            lbl.innerHTML =
+              "Hide Multiple Cloning Site (detected: " +
+              mcsRegion.start +
+              "&ndash;" +
+              e +
+              " bp, " +
+              mcsRegion.count +
+              " enzymes)";
+            chk.disabled = false;
+          } else {
+            lbl.innerHTML = "No Multiple Cloning Site detected";
+            chk.disabled = true;
+          }
+        }
+      }
+
+      function mcsHidden() {
+        var chk = document.getElementById("hideMcs");
+        return !!mcsRegion && chk && chk.checked;
+      }
+
+      function onMcsToggle() {
+        var hide = mcsHidden();
+        // Synchronize checkboxes of enzymes that cut exclusively within the MCS
+        var checks = document.getElementsByClassName("enzyme-check");
+        for (var i = 0; i < checks.length; i++) {
+          var enz = checks[i].value;
+          if (isPureMcsEnzyme(enz)) {
+            checks[i].checked = !hide;
+          }
+        }
+        resetWinner();
+        refreshWheel();
+      }
+
+      function updateUI() {
+        var tbody = document.getElementById("sitesTableBody");
+        var spinBtn = document.getElementById("spinBtn");
+
+        var keys = Object.keys(detectedSites).sort(function (a, b) {
+          return a.toLowerCase() < b.toLowerCase() ? -1 : 1;
+        });
+        if (keys.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" style="text-align:center;">No restriction sites found.</td></tr>';
+          spinBtn.disabled = true;
+          refreshWheel();
+          return;
+        }
+
+        var htmlRows = "";
+        for (var k = 0; k < keys.length; k++) {
+          var enz = keys[k];
+          var posList = detectedSites[enz];
+          var posStrs = [];
+          for (var ps = 0; ps < posList.length; ps++) {
+            posStrs.push(
+              inMcs(posList[ps])
+                ? '<span style="color:#b36b00; font-weight:bold;" title="in MCS">' +
+                    posList[ps] +
+                    " (MCS)</span>"
+                : String(posList[ps]),
+            );
+          }
+          var checked = uncheckedSet[enz] ? "" : " checked";
+          htmlRows +=
+            '<tr class="enzyme-row" data-enzyme="' +
+            enz.toLowerCase() +
+            '" data-cuts="' +
+            posList.length +
+            '">' +
+            '<td style="text-align: center;"><input type="checkbox" class="enzyme-check" value="' +
+            enz +
+            '"' +
+            checked +
+            ' onchange="onCheckChange()"></td>' +
+            '<td><b style="color:' +
+            enzymes[enz].color +
+            '">' +
+            enz +
+            "</b></td>" +
+            "<td><b>" +
+            posList.length +
+            "x</b> (" +
+            posStrs.join(", ") +
+            " bp)</td>" +
+            '<td style="font-family: monospace;">' +
+            enzymes[enz].rawPattern +
+            "</td>" +
+            "</tr>";
+        }
+        tbody.innerHTML = htmlRows;
+
+        spinBtn.disabled = isSpinning;
+        filterTable();
+        refreshWheel();
+      }
+
+      function resetWinner() {
+        winnerSite = null;
+        document.getElementById("winnerBox").style.display = "none";
+      }
+
+      function onCheckChange() {
+        resetWinner();
+        refreshWheel();
+      }
+
+      function filterTable() {
+        var q = document
+          .getElementById("searchInput")
+          .value.toLowerCase()
+          .replace(/^\s+|\s+$/g, "");
+        var rows = document.getElementsByClassName("enzyme-row");
+        for (var r = 0; r < rows.length; r++) {
+          var name = rows[r].getAttribute("data-enzyme");
+          rows[r].style.display = name.indexOf(q) !== -1 ? "" : "none";
+        }
+      }
+
+      function toggleAll(status) {
+        var rows = document.getElementsByClassName("enzyme-row");
+        for (var r = 0; r < rows.length; r++) {
+          if (rows[r].style.display !== "none") {
+            var chk = rows[r].getElementsByTagName("input")[0];
+            if (chk) {
+              if (status && mcsHidden() && isPureMcsEnzyme(chk.value)) {
+                chk.checked = false;
+              } else {
+                chk.checked = status;
+              }
+            }
+          }
+        }
+        resetWinner();
+        refreshWheel();
+      }
+
+      function selectUniqueCutters() {
+        var rows = document.getElementsByClassName("enzyme-row");
+        for (var r = 0; r < rows.length; r++) {
+          var cuts = parseInt(rows[r].getAttribute("data-cuts"), 10);
+          var chk = rows[r].getElementsByTagName("input")[0];
+          if (chk) {
+            var shouldCheck = cuts === 1;
+            if (shouldCheck && mcsHidden() && isPureMcsEnzyme(chk.value)) {
+              shouldCheck = false;
+            }
+            chk.checked = shouldCheck;
+          }
+        }
+        resetWinner();
+        refreshWheel();
+      }
+
+      function getCheckedEnzymes() {
+        var list = [];
+        var checks = document.getElementsByClassName("enzyme-check");
+        for (var i = 0; i < checks.length; i++) {
+          if (checks[i].checked) list.push(checks[i].value);
+        }
+        return list;
+      }
+
+      function collectActiveSites() {
+        var active = getCheckedEnzymes();
+        var list = [];
+        for (var c = 0; c < active.length; c++) {
+          var positions = detectedSites[active[c]];
+          if (!positions) continue;
+          for (var p = 0; p < positions.length; p++) {
+            if (mcsHidden() && inMcs(positions[p])) continue;
+            list.push({ enz: active[c], pos: positions[p], idx: p + 1 });
+          }
+        }
+        return list;
+      }
+
+      /* ---------- Drawing & Collision-Free Labels with Leader Lines ---------- */
+
+      function resizeCanvas() {
+        var wrap = document.getElementById("canvas-container");
+        var canvas = document.getElementById("rouletteCanvas");
+        var w = wrap.clientWidth || 300;
+        var vh = window.innerHeight || 800;
+        var size = Math.min(w, 460, Math.max(240, vh - 150));
+        size = Math.max(240, Math.floor(size));
+        canvasSize = size;
+        canvasDpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(size * canvasDpr);
+        canvas.height = Math.round(size * canvasDpr);
+        canvas.style.width = size + "px";
+        canvas.style.height = size + "px";
+        refreshWheel();
+      }
+
+      function refreshWheel() {
+        drawPlasmid(currentRotation);
+      }
+
+      // Distributes labels vertically on one side (left or right) to prevent overlap,
+      // and computes coordinates for the pointer lines (leader lines).
+      function relaxLabelSide(
+        list,
+        minGap,
+        topBound,
+        bottomBound,
+        cx,
+        cy,
+        labelRadius,
+        sideSign,
+      ) {
+        if (list.length === 0) return;
+        list.sort(function (a, b) {
+          return a.naturalY - b.naturalY;
+        });
+
+        // Check which neighbors are too close -> they get an angled leader line
+        for (var i = 0; i < list.length; i++) {
+          var prevClose =
+            i > 0 &&
+            Math.abs(list[i].naturalY - list[i - 1].naturalY) < minGap * 1.15;
+          var nextClose =
+            i + 1 < list.length &&
+            Math.abs(list[i + 1].naturalY - list[i].naturalY) < minGap * 1.15;
+          list[i].clustered = prevClose || nextClose;
+          list[i].ly = list[i].naturalY;
+        }
+
+        // Iterative relaxation
+        for (var iter = 0; iter < 30; iter++) {
+          var moved = false;
+          for (var j = 1; j < list.length; j++) {
+            var overlap = list[j - 1].ly + minGap - list[j].ly;
+            if (overlap > 0.05) {
+              list[j - 1].ly -= overlap * 0.5;
+              list[j].ly += overlap * 0.5;
+              list[j - 1].clustered = true;
+              list[j].clustered = true;
+              moved = true;
+            }
+          }
+          // Keep within visible canvas bounds
+          if (list[0].ly < topBound) {
+            list[0].ly = topBound;
+            for (var f = 1; f < list.length; f++) {
+              if (list[f].ly < list[f - 1].ly + minGap) {
+                list[f].ly = list[f - 1].ly + minGap;
+              }
+            }
+          }
+          var last = list.length - 1;
+          if (list[last].ly > bottomBound) {
+            list[last].ly = bottomBound;
+            for (var b = last - 1; b >= 0; b--) {
+              if (list[b].ly > list[b + 1].ly - minGap) {
+                list[b].ly = list[b + 1].ly - minGap;
+              }
+            }
+          }
+          if (!moved) break;
+        }
+
+        // Calculate X position along a clean outer contour around the circle
+        for (var k = 0; k < list.length; k++) {
+          var item = list[k];
+          var dy = item.ly - cy;
+          var ratio = dy / labelRadius;
+          if (ratio > 0.96) ratio = 0.96;
+          if (ratio < -0.96) ratio = -0.96;
+          var horiz = Math.sqrt(Math.max(0, 1 - ratio * ratio)) * labelRadius;
+          if (item.clustered || Math.abs(item.ly - item.naturalY) > 2.5) {
+            item.clustered = true;
+            item.lx = cx + sideSign * (horiz + 8);
+          } else {
+            item.lx = item.naturalX;
+          }
+        }
+      }
+
+      function drawPlasmid(rot) {
+        var canvas = document.getElementById("rouletteCanvas");
+        if (!canvas || !canvas.getContext) return;
+        var ctx = canvas.getContext("2d");
+        var size = canvasSize;
+        ctx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
+        ctx.clearRect(0, 0, size, size);
+
+        var cx = size / 2,
+          cy = size / 2;
+        var fs = Math.max(9, Math.round(size / 36));
+        var radius = size / 2 - (22 + fs * 5.4);
+
+        // Main ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, TWO_PI);
+        ctx.strokeStyle = "#000080";
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        // Inner guide ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius - 14, 0, TWO_PI);
+        ctx.strokeStyle = "#cccccc";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Optional: highlight MCS arc subtly on the ring when not hidden
+        if (mcsRegion && !mcsHidden()) {
+          var mcsStartAngle =
+            (mcsRegion.start / plasmidSize) * TWO_PI - Math.PI / 2 + rot;
+          var mcsEndAngle =
+            ((mcsRegion.start + mcsRegion.len) / plasmidSize) * TWO_PI -
+            Math.PI / 2 +
+            rot;
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius - 7, mcsStartAngle, mcsEndAngle);
+          ctx.strokeStyle = "#ff9900";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
+        // Center label
+        var shortName =
+          plasmidName.length > 18
+            ? plasmidName.substring(0, 17) + "…"
+            : plasmidName;
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold " + (fs + 2) + "px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(shortName, cx, cy - 6);
+        ctx.font = fs + 1 + "px Arial";
+        ctx.fillStyle = "#444444";
+        ctx.fillText(plasmidSize + " bp", cx, cy + 10);
+
+        var sites = collectActiveSites();
+        var showNames =
+          document.getElementById("showNames").checked && sites.length <= 40;
+        var info = document.getElementById("activeInfo");
+        if (info) {
+          info.innerHTML =
+            sites.length +
+            " active cut sites" +
+            (document.getElementById("showNames").checked && sites.length > 40
+              ? " (names hidden)"
+              : "");
+        }
+
+        var winKey = winnerSite ? winnerSite.enz + "@" + winnerSite.pos : null;
+        var rightLabels = [];
+        var leftLabels = [];
+        var labelRadius = radius + 14;
+
+        // 1. Draw ticks on the plasmid ring and collect label positions
+        for (var s = 0; s < sites.length; s++) {
+          var site = sites[s];
+          var data = enzymes[site.enz];
+          var isWin = winKey === site.enz + "@" + site.pos;
+          var angle = (site.pos / plasmidSize) * TWO_PI - Math.PI / 2 + rot;
+          var cos = Math.cos(angle),
+            sin = Math.sin(angle);
+          var color = isWin ? "#ff0000" : data.color || "#ff0000";
+
+          var tickInner = radius - 3;
+          var tickOuter = radius + (isWin ? 12 : 7);
+
+          ctx.beginPath();
+          ctx.moveTo(cx + tickInner * cos, cy + tickInner * sin);
+          ctx.lineTo(cx + tickOuter * cos, cy + tickOuter * sin);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = isWin ? 4 : 2;
+          ctx.stroke();
+
+          if (showNames || isWin) {
+            var lr = radius + (isWin ? 18 : 13);
+            var item = {
+              site: site,
+              color: color,
+              isWin: isWin,
+              cos: cos,
+              sin: sin,
+              tickX: cx + tickOuter * cos,
+              tickY: cy + tickOuter * sin,
+              elbowX: cx + (radius + 11) * cos,
+              elbowY: cy + (radius + 11) * sin,
+              naturalX: cx + lr * cos,
+              naturalY: cy + lr * sin,
+              lx: cx + lr * cos,
+              ly: cy + lr * sin,
+              clustered: false,
+            };
+            if (cos >= 0) {
+              rightLabels.push(item);
+            } else {
+              leftLabels.push(item);
+            }
+          }
+        }
+
+        // 2. Fan out overlapping labels and add leader lines
+        var minGap = fs + 3;
+        var topBound = fs + 4;
+        var bottomBound = size - fs - 4;
+        relaxLabelSide(
+          rightLabels,
+          minGap,
+          topBound,
+          bottomBound,
+          cx,
+          cy,
+          labelRadius,
+          1,
+        );
+        relaxLabelSide(
+          leftLabels,
+          minGap,
+          topBound,
+          bottomBound,
+          cx,
+          cy,
+          labelRadius,
+          -1,
+        );
+
+        var allLabels = rightLabels.concat(leftLabels);
+
+        // Draw all leader lines first (so they stay behind the text)
+        for (var l = 0; l < allLabels.length; l++) {
+          var lb = allLabels[l];
+          if (lb.clustered) {
+            var side = lb.cos >= 0 ? 1 : -1;
+            ctx.beginPath();
+            ctx.moveTo(lb.tickX, lb.tickY);
+            // Elbow point from the cut site to the shifted label + short horizontal pointer
+            var midX = lb.lx - side * 6;
+            ctx.lineTo(midX, lb.ly);
+            ctx.lineTo(lb.lx - side * 1, lb.ly);
+            ctx.strokeStyle = lb.color;
+            ctx.lineWidth = lb.isWin ? 2 : 1.15;
+            ctx.stroke();
+          }
+        }
+
+        // Draw enzyme names
+        for (var t = 0; t < allLabels.length; t++) {
+          var lbl = allLabels[t];
+          var sideAlign = lbl.cos >= 0 ? "left" : "right";
+          var tx = lbl.lx;
+          var ty = lbl.ly;
+
+          if (!lbl.clustered) {
+            sideAlign =
+              lbl.cos > 0.35 ? "left" : lbl.cos < -0.35 ? "right" : "center";
+            if (Math.abs(lbl.cos) <= 0.35) {
+              ty += lbl.sin < 0 ? -fs * 0.5 : fs * 0.5;
+            }
+          }
+
+          ctx.font = "bold " + (lbl.isWin ? fs + 3 : fs) + "px Arial";
+          ctx.textBaseline = "middle";
+          ctx.textAlign = sideAlign;
+          ctx.lineJoin = "round";
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "#ffffff";
+          ctx.strokeText(lbl.site.enz, tx, ty);
+          ctx.fillStyle = lbl.color;
+          ctx.fillText(lbl.site.enz, tx, ty);
+        }
+
+        // Pointer needle (at the top, pointing from inside toward the ring)
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - radius + 5);
+        ctx.lineTo(cx - 9, cy - radius + 25);
+        ctx.lineTo(cx + 9, cy - radius + 25);
+        ctx.closePath();
+        ctx.fillStyle = "#ff0000";
+        ctx.fill();
+        ctx.strokeStyle = "#800000";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      /* ---------- Spinning ---------- */
+
+      function startSpin() {
+        if (isSpinning) return;
+        var sites = collectActiveSites();
+        if (sites.length === 0) {
+          alert("Please select at least one enzyme in the table!");
+          return;
+        }
+
+        isSpinning = true;
+        winnerSite = null;
+        var spinBtn = document.getElementById("spinBtn");
+        var fileInput = document.getElementById("fileInput");
+        spinBtn.disabled = true;
+        fileInput.disabled = true;
+        document.getElementById("winnerBox").style.display = "none";
+
+        // Pick winner first (each active site has equal probability),
+        // then rotate so that this exact site lands under the needle.
+        var win = sites[Math.floor(Math.random() * sites.length)];
+        var targetRot = -(win.pos / plasmidSize) * TWO_PI;
+        var cur = currentRotation % TWO_PI;
+        var delta = (((targetRot - cur) % TWO_PI) + TWO_PI) % TWO_PI;
+        var turns = 6 + Math.floor(Math.random() * 3);
+        var totalRotation = delta + turns * TWO_PI;
+        var startRotation = currentRotation;
+        var duration = 8000 + Math.random() * 2000;
+        var startTime = new Date().getTime();
+
+        function frame() {
+          var progress = (new Date().getTime() - startTime) / duration;
+          if (progress > 1) progress = 1;
+          var ease = 1 - Math.pow(1 - progress, 4); // slows down smoothly at the end
+          currentRotation = startRotation + totalRotation * ease;
+
+          if (progress < 1) {
+            drawPlasmid(currentRotation);
+            if (window.requestAnimationFrame)
+              window.requestAnimationFrame(frame);
+            else setTimeout(frame, 16);
+          } else {
+            currentRotation =
+              (((startRotation + totalRotation) % TWO_PI) + TWO_PI) % TWO_PI;
+            isSpinning = false;
+            spinBtn.disabled = false;
+            fileInput.disabled = false;
+            winnerSite = { enz: win.enz, pos: win.pos };
+            drawPlasmid(currentRotation);
+            showWinner(win);
+          }
+        }
+        frame();
+      }
+
+      function showWinner(win) {
+        document.getElementById("winnerName").innerHTML =
+          win.enz + " (" + win.pos + " bp)";
+        document.getElementById("winnerDetails").innerHTML =
+          "Cut site #" +
+          win.idx +
+          " of " +
+          detectedSites[win.enz].length +
+          " | Sequence: " +
+          enzymes[win.enz].rawPattern;
+        document.getElementById("winnerBox").style.display = "block";
+      }
+
+      /* ---------- Init ---------- */
+
+      window.onload = function () {
+        buildEnzymeObjects(rawEnzymeDatabase);
+        var input = document.getElementById("fileInput");
+        if (input) {
+          input.onchange = function () {
+            if (this.files && this.files.length > 0) {
+              handleSelectedFile(this.files[0]);
+            }
+          };
+        }
+        analyzePlasmid(false);
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas, false);
+        window.addEventListener(
+          "orientationchange",
+          function () {
+            setTimeout(resizeCanvas, 250);
+          },
+          false,
+        );
+      };
+    </script>
+  </body>
+</html>
